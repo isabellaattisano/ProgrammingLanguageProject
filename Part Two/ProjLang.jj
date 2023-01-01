@@ -1,0 +1,115 @@
+/* JavaCC file for csc8310 project language */
+// Do not modify the options below.
+options {
+    LOOKAHEAD = 2;
+    STATIC = false;
+    OUTPUT_DIRECTORY = "output";
+    FORCE_LA_CHECK = true;
+}
+
+// Do not change the name of parser/class below.
+PARSER_BEGIN(ProjLangParser)
+
+public class ProjLangParser {
+}
+
+PARSER_END(ProjLangParser)
+
+// Lexer rules
+SKIP: {" "| "\t"| "\n"| "\r"}
+
+TOKEN : { <let: "let"> }
+
+TOKEN : { <val: "val">}
+
+TOKEN:{<end: "end">}
+
+TOKEN:{<in: "in">}
+
+TOKEN: {<fun: "fun">}
+
+TOKEN: {<IF: "if">}
+TOKEN:{ <THEN: "then">}
+TOKEN:{<ELSE: "else"> }
+
+TOKEN: {<lp: "(">}
+TOKEN:{<rp: ")">}
+
+TOKEN: {<WHILE: "while">}
+TOKEN:{<DO: "do">}
+
+TOKEN: { <not: "!">}
+
+TOKEN: {<assn_op: ":=">}
+TOKEN: {<equal: "=">}
+TOKEN: {<less: "<">}
+TOKEN: {<addop: "+" | "-" | "|">}
+TOKEN: {<mulop: "*" | "/" | "&"> }
+
+TOKEN: { <semicolon: ";">}
+
+TOKEN :{<num: ( ["0"-"9"] )+ >}
+
+TOKEN:{<TRUE: "true">}
+
+TOKEN:{<FALSE: "false">}
+
+/* Identifiers */
+TOKEN : {< id: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","0"-"9"] )* >}
+
+
+Expr input(): {Expr e;} {e = EXPR() ";" {return e;}}
+
+Expr EXPR(): {Expr e;} { e = NOT_EXP() {return e;} | e = IF_EXP() {return e;} | e= WHILE_EXP() {return e;}| e = ASSN_EXP() {return e;}| e= REL_EXP() {return e;} | e = LETVAL_EXP() {return e;} | e = SEQ_EXP() {return e;} | e = LETFUN_EXP() {return e;}}
+
+Expr NOT_EXP(): {Expr e;} {<not> e = EXPR() {return new NotExp(e);}}
+
+Expr SEQ_EXP(): {Expr e1, e2;} { "{" e1 = EXPR() (<semicolon> {e1 = new SeqExp(e1, EXPR()); } )* "}" {return e1; }}
+
+Expr WHILE_EXP(): {Expr e1, e2;} {<WHILE> e1 = EXPR() <DO> e2 = EXPR() {return new WhileExp(e1, e2);}}
+
+Expr IF_EXP(): {Expr e, e1, e2;} {<IF> e = EXPR() <THEN> e1 = EXPR() <ELSE> e2 = EXPR() {return new IfExp(e,e1,e2);}}
+
+Expr LETVAL_EXP(): {String op; Expr e1, e2;} {<let> <val> <id> {op = token.image;} <equal> e1 = EXPR() <in> e2 = EXPR() <end> {return new LetValExp(op, e1, e2);}} 
+
+Expr LETFUN_EXP(): {String id1, id2; Expr e1, e2;} {<let> <fun> <id> {id1 = token.image;} <lp> <id> {id2 = token.image;} <rp> <equal> e1 = EXPR() <in> e2= EXPR() <end> {return new LetFunExp(id1, id2, e1, e2);}}
+
+Expr ASSN_EXP(): {String op; Expr e;} {<id> {op = token.image;} <assn_op> e = EXPR() {return new AssnExpr(op, e);} }
+
+Expr REL_EXP(): {Expr i1, i2; String op;} 
+                {i1 = ARITH_EXP() ( (<equal> | <less>) {op = token.image;} 
+                                      i2 = ARITH_EXP() { if (op.equals("=")) i1 = new BinExp(BinOp.EQ, i1, i2);
+                                                        else i1 = new BinExp(BinOp.LT, i1, i2);
+                                                        }
+                                   )? {return i1;}
+                }
+
+Expr ARITH_EXP(): {Expr i1, i2; String op;} 
+                  {i1 = TERM() (<addop> {op = token.image;} 
+                                i2 = TERM() {if (op.equals("+")) i1 = new BinExp(BinOp.PLUS, i1, i2); 
+                                             else if (op.equals("-")) i1 = new BinExp(BinOp.MINUS, i1, i2); 
+                                             else i1 = new BinExp(BinOp.OR, i1, i2);}
+                                )* {return i1;}
+                  
+                  }
+
+Expr TERM(): {Expr i1, i2; String op;} 
+            {i1 = FACTOR() (<mulop> {op = token.image;}
+                            i2 = FACTOR() {
+                                            if (op.equals("*")) i1 = new BinExp(BinOp.TIMES, i1, i2); 
+                                             else if (op.equals("/")) i1 = new BinExp(BinOp.DIV, i1, i2); 
+                                             else i1 = new BinExp(BinOp.AND, i1, i2);
+                                            }
+                            )* {return i1;}
+            }
+
+Expr FACTOR(): {String id1; Expr e;} {
+        <num> {return new IntConst(Integer.parseInt(token.image));} |
+		<TRUE> {return new BoolConst(true); }|
+		<FALSE> {return new BoolConst(false); } |
+		<id> {id1 = token.image;} "(" e = EXPR() ")" {return new AppExp(id1, e); } |
+		<id> {return new VarExp(token.image);}| 
+		"("e = EXPR()")" {return e;}
+    }
+
+
