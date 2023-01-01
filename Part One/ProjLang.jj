@@ -1,0 +1,94 @@
+/* JavaCC file for csc8310 project language */
+// Do not modify the options below.
+options {
+    LOOKAHEAD = 2;
+    STATIC = false;
+    OUTPUT_DIRECTORY = "output";
+    FORCE_LA_CHECK = true;
+}
+
+// Do not change the name of parser/class below.
+PARSER_BEGIN(ProjLangParser)
+
+public class ProjLangParser {
+}
+
+PARSER_END(ProjLangParser)
+
+// Lexer rules
+SKIP: {" "| "\t"| "\n"| "\r"}
+
+TOKEN : { <let: "let"> }
+
+TOKEN : { <val: "val">}
+
+TOKEN:{<end: "end">}
+
+TOKEN:{<in: "in">}
+
+TOKEN: {<fun: "fun">}
+
+TOKEN: {<IF: "if">}
+TOKEN:{ <THEN: "then">}
+TOKEN:{<ELSE: "else"> }
+
+TOKEN: {<lp: "(">}
+TOKEN:{<rp: ")">}
+
+TOKEN: {<WHILE: "while">}
+TOKEN:{<DO: "do">}
+
+TOKEN: { <not: "!">}
+
+TOKEN: {<assn_op: ":=">}
+TOKEN: {<equal: "=">}
+TOKEN: {<less: "<">}
+TOKEN: {<addop: "+" | "-" | "|">}
+TOKEN: {<mulop: "*" | "/" | "&"> }
+
+TOKEN: { <semicolon: ";">}
+
+TOKEN :{<num: ( ["0"-"9"] )+ >}
+
+TOKEN:{<TRUE: "true">}
+
+TOKEN:{<FALSE: "false">}
+
+/* Identifiers */
+TOKEN : {< id: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","0"-"9"] )* >}
+
+
+void input(): {} {EXPR() <semicolon> }
+
+void EXPR(): {} { IF_EXP() | LETVAL_EXP()| LETFUN_EXP() | WHILE_EXP() | NOT_EXP() | ASSN_EXP() | REL_EXP() | SEQ_EXP()}
+
+void SEQ_EXP(): {} {"{"EXPR() (<semicolon> EXPR())*"}"}
+
+void IF_EXP(): {} {<IF> EXPR() <THEN> EXPR() <ELSE> EXPR()}
+
+void LETVAL_EXP(): {} {<let> <val> <id> <equal> EXPR() <in> EXPR() <end>}
+
+void LETFUN_EXP(): {} {<let> <fun> <id> <lp> <id> <rp> <equal> EXPR() <in> EXPR() <end>}
+
+void WHILE_EXP(): {} {<WHILE> EXPR() <DO> EXPR()}
+
+void NOT_EXP(): {} {<not> EXPR()}
+
+void ASSN_EXP(): {} {<id> <assn_op> EXPR()}
+
+void REL_EXP(): {} {ARITH_EXP() ((<equal> | <less>) ARITH_EXP())?}
+
+void ARITH_EXP(): {} {TERM() (<addop> TERM())*}
+
+void TERM(): {} {FACTOR() (<mulop> FACTOR())*}
+
+void FACTOR(): {} {<num> |
+		  <TRUE> |
+		<FALSE> |
+		<id>"("EXPR()")"|
+		<id>|
+		"("EXPR()")"
+    }
+
+
+h
