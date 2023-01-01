@@ -2,7 +2,7 @@
 
 ## *Additional Project Details*
 
-Additional project details can be found on my website : [Project Details](http://localhost:8888/personal-website/projects/pl/pl.html)
+Additional project details can be found on my website : [Project Details]()
 
 
 ## *Project Overview*
